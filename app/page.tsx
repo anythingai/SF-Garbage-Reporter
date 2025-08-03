@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { MapPin, CheckCircle, AlertCircle, Loader2, RefreshCw, Paperclip, XCircle, Trash2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 type SubmissionState = "idle" | "requesting-location" | "submitting" | "success" | "error"
 
@@ -76,6 +77,7 @@ export default function ReportPage() {
   const [selectedEmail, setSelectedEmail] = useState<string>("")
   const [photo, setPhoto] = useState<{ name: string; dataUrl: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+const isMobile = useIsMobile();
 
   const generateClientNonce = () => {
     return crypto.randomUUID()
@@ -332,8 +334,9 @@ export default function ReportPage() {
       <div
         className="absolute inset-0 bg-cover bg-center blur-xs"
         style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2070&auto=format&fit=crop')",
+          backgroundImage: isMobile
+            ? "url('/sf-mob-bg.jpeg')"
+            : "url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2070&auto=format&fit=crop')",
         }}
       />
       <div className="absolute inset-0 bg-black/30" />
