@@ -8,8 +8,9 @@ const submitSchema = z.object({
   accuracy: z.number().optional(),
   timestamp: z.number().optional(),
   client_nonce: z.string().uuid(),
-  message: z.string().optional(),
-  photoBase64: z.string().optional(),
+  message: z.string().min(1),
+  photoBase64: z.string(),
+  recipientEmail: z.string().email(),
 })
 
 // San Francisco bounding box (more precise)
@@ -56,9 +57,13 @@ async function sendEmailReport(
       })
     }
 
+    const toEmail = process.env.NODE_ENV !== "production"
+      ? process.env.DEV_EMAIL || "joydip@bajarangs.com"
+      : data.recipientEmail;
+    
     const emailPayload = {
       from: process.env.SENDER_EMAIL || "reports@qr-garbage-reporter.com",
-      to: process.env.CITY_OPERATIONS_EMAIL || "operations@sf.gov",
+      to: toEmail,
       subject: `Litter report — ${data.lat.toFixed(6)},${data.lon.toFixed(6)} — QR Reporter`,
       text: `
 Source: QR-Driven Garbage Reporting Webapp
@@ -99,7 +104,7 @@ ${data.message || "No message provided."}
     })
 
     return { success: true, reference: result.id }
-  } catch (error) {
+  } catch (error: any) {
     logWithCorrelation(correlationId, "error", "Failed to send email", { error: error.message })
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
@@ -121,7 +126,6 @@ export async function POST(request: NextRequest) {
 
   try {
     const ip =
-      request.ip ||
       request.headers.get("x-forwarded-for")?.split(",")[0] ||
       request.headers.get("x-real-ip") ||
       "unknown"
@@ -184,7 +188,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(response)
-  } catch (error) {
+  } catch (error: any) {
     const duration = Date.now() - startTime
     logWithCorrelation(correlationId, "error", "API error", { error: error.message, duration })
 

@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { MapPin, CheckCircle, AlertCircle, Loader2, RefreshCw, Paperclip, XCircle, Trash2 } from "lucide-react"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { useIsMobile } from "@/hooks/use-mobile"
 
 type SubmissionState = "idle" | "requesting-location" | "submitting" | "success" | "error"
 
@@ -74,10 +73,9 @@ export default function ReportPage() {
   const [response, setResponse] = useState<SubmissionResponse | null>(null)
   const [error, setError] = useState<string>("")
   const [message, setMessage] = useState("")
-  const [selectedEmail, setSelectedEmail] = useState<string>("")
   const [photo, setPhoto] = useState<{ name: string; dataUrl: string } | null>(null)
+  const [recipientEmail, setRecipientEmail] = useState<string>("")
   const fileInputRef = useRef<HTMLInputElement>(null)
-const isMobile = useIsMobile();
 
   const generateClientNonce = () => {
     return crypto.randomUUID()
@@ -103,6 +101,21 @@ const isMobile = useIsMobile();
   }
 
   const handleLocationRequest = () => {
+    if (!message) {
+      setError("Message is required")
+      setState("error")
+      return
+    }
+    if (!photo) {
+      setError("Photo is required")
+      setState("error")
+      return
+    }
+    if (!recipientEmail) {
+      setError("Please select a department or agency")
+      setState("error")
+      return
+    }
     requestLocation()
   }
 
@@ -167,7 +180,8 @@ const isMobile = useIsMobile();
         timestamp: locationData.timestamp,
         client_nonce: generateClientNonce(),
         message: message,
-        photoBase64: photo?.dataUrl,
+        photoBase64: photo!.dataUrl,
+        recipientEmail: recipientEmail,
       }
 
       const res = await fetch("/api/submit", {
@@ -208,50 +222,18 @@ const isMobile = useIsMobile();
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="department">Department / Agency</Label>
-              <Select value={selectedEmail} onValueChange={setSelectedEmail}>
-                <SelectTrigger id="department" aria-label="Department Select">
-                  <SelectValue placeholder="Select Department to email" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dpw@sfdpw.org">SFPW (General Reporting)</SelectItem>
-                  <SelectItem value="urbanforestry@sfdpw.org">Urban Forestry (Tree Issues)</SelectItem>
-                  <SelectItem value="zerograffiti@sfdpw.org">Graffiti Removal (Public)</SelectItem>
-                  <SelectItem value="graffiti@sfgov.org">SFPD Graffiti Unit</SelectItem>
-                  <SelectItem value="trafficpermits@sfmta.com">SFMTA (Transit/Parking/Permits)</SelectItem>
-                  <SelectItem value="annie.knight@sfmta.com">SFMTA (General/Budget)</SelectItem>
-                  <SelectItem value="pic@sfgov.org">SF Planning</SelectItem>
-                  <SelectItem value="dbicustomerservice@sfgov.org">Building Inspection (DBI)</SelectItem>
-                  <SelectItem value="contact@sfdph.org">Department of Public Health</SelectItem>
-                  <SelectItem value="sfdhr@sfgov.org">Department of Human Resources</SelectItem>
-                  <SelectItem value="mayorLondonBreed@sfgov.org">Mayor's Office</SelectItem>
-                  <SelectItem value="info@sfcityattorney.org">City Attorney</SelectItem>
-                  <SelectItem value="controller@sfgov.org">Controller’s Office</SelectItem>
-                  <SelectItem value="rentboard@sfgov.org">Rent Board</SelectItem>
-                  <SelectItem value="dosw@sfgov.org">Status of Women</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={() => (window.location.href = `mailto:${selectedEmail}`)}
-                className="w-full"
-                disabled={!selectedEmail}
-              >
-                Send Email
-              </Button>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="message">Message*</Label>
+              <Label htmlFor="message">Message</Label>
               <Textarea
                 id="message"
-                required
-                placeholder="e.g., 'Large pile of cardboard boxes behind the bus stop.'"
+                placeholder="Describe the issue in detail"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label>Photo*</Label>
+              <Label>Photo</Label>
               {!photo ? (
                 <Button
                   variant="outline"
@@ -277,9 +259,35 @@ const isMobile = useIsMobile();
                 </div>
               )}
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+
+              <div className="space-y-2">
+                <Label htmlFor="recipient">Department / Agency</Label>
+                <Select value={recipientEmail} onValueChange={setRecipientEmail}>
+                  <SelectTrigger id="recipient">
+                    <SelectValue placeholder="Select Department / Agency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dpw@sfdpw.org">SFPW (General Reporting)</SelectItem>
+                    <SelectItem value="urbanforestry@sfdpw.org">Urban Forestry (Tree Issues)</SelectItem>
+                    <SelectItem value="zerograffiti@sfdpw.org">Graffiti Removal (Public)</SelectItem>
+                    <SelectItem value="graffiti@sfgov.org">SFPD Graffiti Unit</SelectItem>
+                    <SelectItem value="trafficpermits@sfmta.com">SFMTA (Transit/Parking/Permits)</SelectItem>
+                    <SelectItem value="annie.knight@sfmta.com">SFMTA (General/Budget)</SelectItem>
+                    <SelectItem value="pic@sfgov.org">SF Planning</SelectItem>
+                    <SelectItem value="dbicustomerservice@sfgov.org">Building Inspection (DBI)</SelectItem>
+                    <SelectItem value="contact@sfdph.org">Department of Public Health</SelectItem>
+                    <SelectItem value="sfdhr@sfgov.org">Department of Human Resources</SelectItem>
+                    <SelectItem value="mayorLondonBreed@sfgov.org">Mayor's Office</SelectItem>
+                    <SelectItem value="info@sfcityattorney.org">City Attorney</SelectItem>
+                    <SelectItem value="controller@sfgov.org">Controller’s Office</SelectItem>
+                    <SelectItem value="rentboard@sfgov.org">Rent Board</SelectItem>
+                    <SelectItem value="dosw@sfgov.org">Status of Women</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             {error && <p className="text-sm text-destructive text-center">{error}</p>}
-            <Button onClick={handleLocationRequest} className="w-full h-12 text-lg" size="lg" disabled={!message.trim() || !photo}>
+            <Button onClick={handleLocationRequest} className="w-full h-12 text-lg" size="lg">
               <MapPin className="w-5 h-5 mr-2" />
               Allow Location & Report
             </Button>
@@ -334,9 +342,8 @@ const isMobile = useIsMobile();
       <div
         className="absolute inset-0 bg-cover bg-center blur-xs"
         style={{
-          backgroundImage: isMobile
-            ? "url('/sf-mob-bg.jpeg')"
-            : "url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2070&auto=format&fit=crop')",
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2070&auto=format&fit=crop')",
         }}
       />
       <div className="absolute inset-0 bg-black/30" />
