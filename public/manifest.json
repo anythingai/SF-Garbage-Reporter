@@ -1,0 +1,21 @@
+{
+  "name": "QR Garbage Reporter",
+  "short_name": "QR Reporter",
+  "description": "Report garbage and illegal dumping to city operations",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/placeholder.svg?height=192&width=192",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/placeholder.svg?height=512&width=512",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
